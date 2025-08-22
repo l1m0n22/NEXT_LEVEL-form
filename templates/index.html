@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Анкета — Подать заявку</title>
+  <style>
+    :root {
+      --bg: #0b0d12;
+      --card: #12151b;
+      --muted: #8b95a7;
+      --primary: #4f8cff;
+      --accent: #22d3ee;
+      --error: #ef4444;
+      --ring: rgba(79, 140, 255, .35);
+      --text: #e6e9ef;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background: linear-gradient(180deg, #0b0d12 0%, #0f1320 100%);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-text-size-adjust: 100%;              /* меньше шансов на неожиданный масштаб */
+      -webkit-tap-highlight-color: transparent;    /* без серого блика на iOS */
+    }
+    .container { max-width: 960px; margin: 0 auto; padding: 24px; }
+    .header {
+      position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(8px);
+      background: rgba(11,13,18,.6);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .header .inner { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .logo { font-weight: 700; letter-spacing: .3px; }
+
+    .btn {
+      appearance: none; border: 0; border-radius: 12px;
+      padding: 12px 18px; font-weight: 600; cursor: pointer;
+      background: linear-gradient(90deg, var(--primary), var(--accent)); color: #fff;
+      box-shadow: 0 8px 30px rgba(79,140,255,.35);
+      transition: transform .2s ease, box-shadow .2s ease;
+      min-height: 48px; /* крупный тач-таргет */
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 12px 36px rgba(79,140,255,.45); }
+    .btn:active { transform: translateY(0); }
+
+    .hero { padding: 72px 0 36px; }
+    .hero h1 { font-size: clamp(28px, 4vw, 44px); line-height: 1.1; margin: 0 0 12px; }
+    .hero p { color: var(--muted); max-width: 720px; margin: 0 0 24px; }
+
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,.06);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 10px 40px rgba(0,0,0,.35);
+    }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+
+    label { display: block; font-weight: 600; margin: 8px 0 6px; }
+    input, textarea, button {
+      font-size: 16px; /* предотвращает iOS зум при фокусе */
+    }
+    input, textarea {
+      width: 100%; background: #0c111a; color: var(--text);
+      border: 1px solid rgba(255,255,255,.08); border-radius: 12px;
+      padding: 12px 14px; outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 6px var(--ring); }
+    input::placeholder, textarea::placeholder { color: #6b7280; }
+    .help { font-size: 12px; color: var(--muted); margin-top: 6px; }
+    .error { color: var(--error); font-size: 13px; margin-top: 6px; display: none; }
+    .invalid input, .invalid textarea { border-color: var(--error); }
+    .section { padding: 24px 0 72px; }
+    #apply.card { margin-top: 12px; }
+    .success {
+      display: none; margin-top: 16px; padding: 12px 14px; border-radius: 12px;
+      background: rgba(34,211,238,.12); border: 1px solid rgba(34,211,238,.35);
+    }
+    .highlight { animation: flash 2s ease 1; }
+    @keyframes flash { 0% { box-shadow: 0 0 0 0 rgba(79,140,255,.7); } 100% { box-shadow: 0 0 0 0 rgba(79,140,255,0); } }
+    small.req { color: var(--muted); font-weight: 500; margin-left: 8px; }
+    .field { margin-bottom: 12px; }
+
+    /* ——— Мобильные улучшения ——— */
+    @media (max-width: 760px) {
+      .container { padding: 16px; }
+      .hero { padding: 56px 0 24px; }
+      .btn { width: 100%; } /* кнопки на всю ширину */
+      body { padding-bottom: calc(76px + env(safe-area-inset-bottom)); } /* запас под плавающую CTA */
+    }
+
+    /* Плавающая мобильная CTA */
+    .mobile-cta {
+      position: fixed; left: 16px; right: 16px;
+      bottom: calc(12px + env(safe-area-inset-bottom));
+      display: none; /* только на мобилках */
+      z-index: 150;
+    }
+    @media (max-width: 760px) { .mobile-cta { display: block; } }
+
+    /* Пользователи с reduced motion — без анимаций */
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; transition: none !important; }
+      .btn:hover { transform: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="container inner">
+      <div class="logo">Анкета</div>
+      <button class="btn" id="cta">Подать заявку</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container">
+        <div class="card">
+          <h1>Коротко о программе</h1>
+          <p>Оставьте заявку и расскажите о себе. Мы свяжемся с вами, чтобы подтвердить участие и ответить на вопросы.</p>
+          <ul class="help" style="margin:0; padding-left:1rem;">
+            <li>Заполнение займёт ~1–2 минуты.</li>
+            <li>Поля с пометкой «обязательно» — обязательны.</li>
+          </ul>
+          <div style="margin-top:16px">
+            <button class="btn" id="cta2">Перейти к форме</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="apply" class="section">
+      <div class="container">
+        <form class="card" id="form" novalidate>
+          <h2 style="margin-top:0">Заявка на участие</h2>
+
+          <div class="grid">
+            <div class="field">
+              <label for="firstName">Имя <small class="req">(обязательно)</small></label>
+              <input id="firstName" name="firstName" type="text" placeholder="Иван"
+                     autocomplete="given-name" required minlength="2" maxlength="50" />
+              <div class="error" id="err-firstName"></div>
+            </div>
+
+            <div class="field">
+              <label for="lastName">Фамилия <small class="req">(обязательно)</small></label>
+              <input id="lastName" name="lastName" type="text" placeholder="Иванов"
+                     autocomplete="family-name" required minlength="2" maxlength="60" />
+              <div class="error" id="err-lastName"></div>
+            </div>
+
+            <div class="field">
+              <label for="middleName">Отчество <small class="req">(необязательно)</small></label>
+              <input id="middleName" name="middleName" type="text" placeholder="Иванович"
+                     autocomplete="additional-name" minlength="2" maxlength="60" />
+              <div class="error" id="err-middleName"></div>
+            </div>
+
+            <div class="field">
+              <label for="phone">Номер телефона <small class="req">(обязательно)</small></label>
+              <input id="phone" name="phone" type="tel" inputmode="tel"
+                     placeholder="+998 90 123 45 67" autocomplete="tel" required
+                     pattern="^[0-9+()\\s\\-]{7,20}$"
+                     title="Введите телефон: допускаются цифры, пробелы, + ( ) -" />
+              <div class="help">Формат любой: +998 90 123-45-67 или +7 (999) 123-45-67</div>
+              <div class="error" id="err-phone"></div>
+            </div>
+
+            <div class="field">
+              <label for="email">Почта <small class="req">(обязательно)</small></label>
+              <input id="email" name="email" type="email" placeholder="name@example.com"
+                     autocomplete="email" required />
+              <div class="error" id="err-email"></div>
+            </div>
+
+            <div class="field">
+              <label for="about">О себе <small class="req">(обязательно)</small></label>
+              <textarea id="about" name="about" rows="5"
+                        placeholder="Коротко расскажите о вашем опыте и целях"
+                        required minlength="20" maxlength="600"></textarea>
+              <div class="help"><span id="count">0</span>/600 символов</div>
+              <div class="error" id="err-about"></div>
+            </div>
+          </div>
+
+          <button class="btn" type="submit" style="margin-top:8px">Отправить заявку</button>
+          <div class="success" id="success" role="status" aria-live="polite">
+            Заявка отправлена. Спасибо! Мы свяжемся с вами по указанным контактам.
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <!-- Плавающая мобильная кнопка -->
+  <button class="btn mobile-cta" id="ctaMobile">Подать заявку</button>
+
+  <script>
+    (function () {
+      const cta  = document.getElementById('cta');
+      const cta2 = document.getElementById('cta2');
+      const ctaMobile = document.getElementById('ctaMobile');
+      const apply = document.getElementById('apply');
+      const form = document.getElementById('form');
+      const formCard = form.closest('.card');
+
+      function goToForm() {
+        apply.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        formCard.classList.add('highlight');
+        setTimeout(() => formCard.classList.remove('highlight'), 1600);
+        setTimeout(() => document.getElementById('firstName').focus({ preventScroll: true }), 600);
+      }
+      [cta, cta2, ctaMobile].forEach(btn => btn && btn.addEventListener('click', goToForm));
+
+      // Счётчик символов "О себе"
+      const about = document.getElementById('about');
+      const count = document.getElementById('count');
+      function updateCount() { count.textContent = about.value.length; }
+      about.addEventListener('input', updateCount);
+      updateCount();
+
+      // Валидация
+      function setError(input, message) {
+        const field = input.closest('.field') || input.parentElement;
+        field.classList.add('invalid');
+        const err = field.querySelector('.error');
+        if (err) { err.textContent = message; err.style.display = 'block'; }
+      }
+      function clearError(input) {
+        const field = input.closest('.field') || input.parentElement;
+        field.classList.remove('invalid');
+        const err = field.querySelector('.error');
+        if (err) { err.textContent = ''; err.style.display = 'none'; }
+      }
+      const validators = {
+        firstName: (el) => {
+          if (!el.value.trim()) return 'Введите имя.';
+          if (el.value.trim().length < 2) return 'Имя должно быть не короче 2 символов.';
+          return '';
+        },
+        lastName: (el) => {
+          if (!el.value.trim()) return 'Введите фамилию.';
+          if (el.value.trim().length < 2) return 'Фамилия должна быть не короче 2 символов.';
+          return '';
+        },
+        middleName: (el) => {
+          if (el.value && el.value.trim().length < 2)
+            return 'Отчество должно быть не короче 2 символов или оставьте поле пустым.';
+          return '';
+        },
+        phone: (el) => {
+          if (!el.value.trim()) return 'Укажите номер телефона.';
+          const re = /^[0-9+()\\s\\-]{7,20}$/;
+          if (!re.test(el.value.trim())) return 'Неверный формат телефона.';
+          return '';
+        },
+        email: (el) => {
+          if (!el.value.trim()) return 'Укажите e-mail.';
+          if (!el.checkValidity()) return 'Неверный e-mail.';
+          return '';
+        },
+        about: (el) => {
+          const v = el.value.trim();
+          if (!v) return 'Расскажите кратко о себе.';
+          if (v.length < 20) return 'Минимум 20 символов.';
+          if (v.length > 600) return 'Максимум 600 символов.';
+          return '';
+        }
+      };
+      form.querySelectorAll('input, textarea').forEach(el => {
+        el.addEventListener('input', () => clearError(el));
+        el.addEventListener('blur', () => {
+          const id = el.id;
+          if (validators[id]) {
+            const msg = validators[id](el);
+            msg ? setError(el, msg) : clearError(el);
+          }
+        });
+      });
+
+      // Отправка на бэкенд
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        let firstInvalid = null, hasError = false;
+        for (const [id, fn] of Object.entries(validators)) {
+          const el = document.getElementById(id);
+          const msg = fn(el);
+          if (msg) {
+            setError(el, msg);
+            if (!firstInvalid) firstInvalid = el;
+            hasError = true;
+          } else {
+            clearError(el);
+          }
+        }
+        if (hasError) { firstInvalid?.focus(); return; }
+
+        const data = Object.fromEntries(new FormData(form).entries());
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        const oldText = submitBtn.textContent;
+        submitBtn.textContent = 'Отправка...';
+
+        try {
+          const resp = await fetch('/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+          const payload = await resp.json();
+
+          if (!resp.ok) {
+            if (payload?.errors) {
+              Object.entries(payload.errors).forEach(([k,v]) => {
+                const el = document.getElementById(k);
+                if (el) setError(el, v);
+              });
+            } else {
+              alert(payload?.error || 'Ошибка отправки. Попробуйте позже.');
+            }
+            return;
+          }
+
+          document.getElementById('success').style.display = 'block';
+          form.reset();
+          updateCount();
+
+          // Поднимем пользователя к сообщению об успехе на мобильных
+          document.querySelector('#apply').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        } catch (err) {
+          alert('Сеть недоступна или сервер не отвечает.');
+          console.error(err);
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = oldText;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
