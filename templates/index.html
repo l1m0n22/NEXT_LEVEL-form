@@ -86,6 +86,44 @@
     small.req { color: var(--muted); font-weight: 500; margin-left: 8px; }
     .field { margin-bottom: 12px; }
 
+    /* --- Dropzone (фото) --- */
+    .dropzone {
+      position: relative;
+      border: 2px dashed rgba(255,255,255,.15);
+      border-radius: 16px;
+      background: #0c111a;
+      min-height: 220px;              /* побольше зоны */
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: border-color .2s, box-shadow .2s, background .2s;
+      overflow: hidden;
+    }
+    .dropzone.hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 6px var(--ring);
+      background: #0c111aee;
+    }
+    .dz-inner {
+      display: flex; align-items: center; justify-content: center; flex-direction: column;
+      gap: 10px; text-align: center; color: var(--muted); padding: 16px;
+      pointer-events: none;
+    }
+    .dz-plus {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      color: #fff; display: flex; align-items: center; justify-content: center;
+      font-size: 44px; font-weight: 700; box-shadow: 0 10px 30px rgba(79,140,255,.35);
+    }
+    .dz-text { font-size: 14px; line-height: 1.35; }
+    .dz-text small { color: #6b7280; display: block; margin-top: 6px; }
+
+    .dz-preview {
+      position: absolute; inset: 10px;
+      border-radius: 12px; object-fit: contain;
+      max-width: calc(100% - 20px); max-height: calc(100% - 20px);
+      display: none;
+    }
+
     @media (max-width: 760px) {
       .container { padding: 16px; }
       .hero { padding: 56px 0 24px; }
@@ -110,7 +148,7 @@
   <header class="header">
     <div class="container inner">
       <div class="logo">Анкета</div>
-      <button class="btn" id="cta">Podat’ ariza</button>
+      <button class="btn" id="cta">Topshirish</button>
     </div>
   </header>
 
@@ -118,7 +156,7 @@
     <section class="hero">
       <div class="container">
         <div class="card">
-          <h1>Qisqacha dastur haqida (intro text для анкеты)</h1>
+          <h1>Qisqacha dastur haqida</h1>
           <p>Biz NEXT LEVEL jamoasimiz.</p>
           <p>Bizning maqsadimiz — yangi yuzlarni topish va JIETTI brendi uchun ambassadorga aylantirish.
             Agar siz bloger bo‘lsangiz yoki endi boshlayotgan bo‘lsangiz — biz sizni qidiryapmiz!</p>
@@ -156,7 +194,7 @@
               <label for="phone">Telefon raqamingiz (+998 ... formatida) <small class="req">*</small></label>
               <input id="phone" name="phone" type="tel" inputmode="tel"
                      placeholder="+998 90 123 45 67" autocomplete="tel" required
-                     pattern="^[0-9+()\s\-]{7,20}$"
+                     pattern="^[0-9+()\\s\\-]{7,20}$"
                      title="+998..., raqamlar, bo‘sh joylar, + ( ) - belgilariga ruxsat" />
               <div class="error" id="err-phone"></div>
             </div>
@@ -224,6 +262,24 @@
               <div class="help"><span id="count">0</span>/600</div>
               <div class="error" id="err-about"></div>
             </div>
+
+            <!-- Новая dropzone для фото -->
+            <div class="field" style="grid-column: 1 / -1;">
+              <input id="photo" name="photo" type="file"
+                     accept="image/jpeg,image/png,image/webp,image/gif" hidden />
+              <div id="dropzone" class="dropzone" role="button" tabindex="0" aria-label="Foto yuklash">
+                <div class="dz-inner">
+                  <div class="dz-plus">+</div>
+                  <div class="dz-text">
+                    <strong>Foto (bu yerga suratni tashlang)</strong>
+                    <small>JPG/PNG/WEBP/GIF, 10 MB gacha</small>
+                    <small>yoki bosing — fayl tanlang</small>
+                  </div>
+                </div>
+                <img id="photoPreview" class="dz-preview" alt="Foto preview">
+              </div>
+              <div class="error" id="err-photo"></div>
+            </div>
           </div>
 
           <button class="btn" type="submit" style="margin-top:8px">Yuborish</button>
@@ -235,7 +291,7 @@
     </section>
   </main>
 
-  <button class="btn mobile-cta" id="ctaMobile">Podat’ ariza</button>
+  <button class="btn mobile-cta" id="ctaMobile">Topshirish</button>
 
   <script>
     (function () {
@@ -254,58 +310,83 @@
       }
       [cta, cta2, ctaMobile].forEach(btn => btn && btn.addEventListener('click', goToForm));
 
-      // Counter
+      // Счётчик
       const about = document.getElementById('about');
       const count = document.getElementById('count');
       function updateCount() { count.textContent = about.value.length; }
       about.addEventListener('input', updateCount);
       updateCount();
 
-      // Validation helpers
+      // ---- Dropzone / preview ----
+      const photoInput = document.getElementById('photo');
+      const dz = document.getElementById('dropzone');
+      const dzInner = dz.querySelector('.dz-inner');
+      const preview = document.getElementById('photoPreview');
+
+      function openChooser() { photoInput.click(); }
+      dz.addEventListener('click', openChooser);
+      dz.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openChooser(); }
+      });
+
+      dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('hover'); });
+      dz.addEventListener('dragleave', () => dz.classList.remove('hover'));
+      dz.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dz.classList.remove('hover');
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+          photoInput.files = e.dataTransfer.files; // назначаем файл инпуту
+          handleFile();
+        }
+      });
+
+      photoInput.addEventListener('change', handleFile);
+
+      function handleFile() {
+        const f = photoInput.files?.[0];
+        if (!f) {
+          preview.style.display = 'none';
+          preview.removeAttribute('src');
+          dzInner.style.display = 'flex';
+          return;
+        }
+        const url = URL.createObjectURL(f);
+        preview.src = url;
+        preview.style.display = 'block';
+        dzInner.style.display = 'none';
+      }
+
+      // ---- Валидация ----
       function setError(input, message) {
-        const field = input.closest('.field') || input.parentElement;
+        const field = (input.closest && input.closest('.field')) || input.parentElement || dz.parentElement;
         field.classList.add('invalid');
         const err = field.querySelector('.error');
         if (err) { err.textContent = message; err.style.display = 'block'; }
       }
       function clearError(input) {
-        const field = input.closest('.field') || input.parentElement;
+        const field = (input.closest && input.closest('.field')) || input.parentElement || dz.parentElement;
         field.classList.remove('invalid');
         const err = field.querySelector('.error');
         if (err) { err.textContent = ''; err.style.display = 'none'; }
       }
 
       const validators = {
-        firstName: (el) => {
-          const v = el.value.trim();
-          if (!v) return "Iltimos, to‘liq ismingizni yozing.";
-          if (v.length < 2) return "Kamida 2 ta belgi bo‘lishi kerak.";
-          return '';
-        },
-        phone: (el) => {
-          const v = el.value.trim();
-          if (!v) return "Telefon raqamini kiriting.";
-          const re = /^[0-9+()\\s\\-]{7,20}$/;
-          if (!re.test(v)) return "Telefon formati noto‘g‘ri.";
-          return '';
-        },
-        email: (el) => {
-          const v = el.value.trim();
-          if (!v) return "Email manzilini kiriting.";
-          if (!el.checkValidity()) return "Email noto‘g‘ri.";
-          return '';
-        },
-        about: (el) => {
-          const v = el.value.trim();
-          if (!v) return "1–2 jumla yozing.";
-          if (v.length < 20) return "Kamida 20 ta belgi.";
-          if (v.length > 600) return "Ko‘pi bilan 600 ta belgi.";
+        firstName: (el) => { const v = el.value.trim(); if (!v) return "Iltimos, to‘liq ismingizni yozing."; if (v.length < 2) return "Kamida 2 ta belgi bo‘lishi kerak."; return ''; },
+        phone: (el) => { const v = el.value.trim(); if (!v) return "Telefon raqamini kiriting."; const re=/^[0-9+()\\s\\-]{7,20}$/; if(!re.test(v)) return "Telefon formati noto‘g‘ri."; return ''; },
+        email: (el) => { const v = el.value.trim(); if (!v) return "Email manzilini kiriting."; if (!el.checkValidity()) return "Email noto‘g‘ri."; return ''; },
+        about: (el) => { const v = el.value.trim(); if (!v) return "1–2 jumla yozing."; if (v.length < 20) return "Kamida 20 ta belgi."; if (v.length > 600) return "Ko‘pi bilan 600 ta belgi."; return ''; },
+        photo: () => {
+          const f = photoInput.files?.[0];
+          if (!f) return '';
+          const ok = ["image/jpeg","image/png","image/webp","image/gif"];
+          if (!ok.includes(f.type)) return "Faqat JPG/PNG/WEBP/GIF ruxsat etiladi.";
+          if (f.size > 10*1024*1024) return "Hajmi 10 MB dan oshmasin.";
           return '';
         }
       };
 
-      // Live validation
       form.querySelectorAll('input, textarea').forEach(el => {
+        if (el === photoInput) return; // фото обрабатываем сами
         el.addEventListener('input', () => clearError(el));
         el.addEventListener('blur', () => {
           const id = el.id;
@@ -316,43 +397,38 @@
         });
       });
 
-      // Submit
+      // ---- Submit (multipart) ----
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        // Required: firstName, phone, email, about
         let firstInvalid = null, hasError = false;
-        ['firstName','phone','email','about'].forEach(id => {
-          const el = document.getElementById(id);
+        ['firstName','phone','email','about','photo'].forEach(id => {
+          const el = (id === 'photo') ? photoInput : document.getElementById(id);
           const msg = validators[id](el);
           if (msg) { setError(el, msg); firstInvalid ??= el; hasError = true; }
         });
-        if (hasError) { firstInvalid?.focus(); return; }
+        if (hasError) { (firstInvalid?.focus?.())?.(); return; }
 
-        // для совместимости с бэком: разложим ФИО в lastName/middleName при необходимости
+        // разложим ФИО (как и раньше)
         const fio = (document.getElementById('firstName').value || '').trim();
         const parts = fio.split(/\s+/);
-        document.getElementById('lastName').value   = parts[0] || fio;      // фамилия или всё ФИО
-        document.getElementById('middleName').value = parts.slice(2).join(' '); // отчество (если есть)
+        document.getElementById('lastName').value   = parts[0] || fio;
+        document.getElementById('middleName').value = parts.slice(2).join(' ');
 
-        const data = Object.fromEntries(new FormData(form).entries());
+        const fd = new FormData(form); // включает файл
         const submitBtn = form.querySelector('button[type="submit"]');
         submitBtn.disabled = true;
         const oldText = submitBtn.textContent;
         submitBtn.textContent = 'Yuborilmoqda...';
 
         try {
-          const resp = await fetch('/submit', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-          });
+          const resp = await fetch('/submit', { method: 'POST', body: fd });
           const payload = await resp.json();
 
           if (!resp.ok) {
             if (payload?.errors) {
               Object.entries(payload.errors).forEach(([k,v]) => {
-                const el = document.getElementById(k);
+                const el = (k === 'photo') ? photoInput : document.getElementById(k);
                 if (el) setError(el, v);
               });
             } else {
@@ -362,8 +438,8 @@
           }
 
           document.getElementById('success').style.display = 'block';
-          form.reset();
-          updateCount();
+          form.reset(); updateCount();
+          preview.style.display='none'; preview.removeAttribute('src'); dzInner.style.display='flex';
           document.querySelector('#apply').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
         } catch (err) {
