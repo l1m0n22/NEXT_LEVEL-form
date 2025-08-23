@@ -95,9 +95,9 @@
             Agar siz bloger bo‘lsangiz yoki endi boshlayotgan bo‘lsangiz — biz sizni qidiryapmiz!</p>
           <p>Siz kontent yaratasiz, biz esa mahsulot, qo‘llab-quvvatlash va barqaror daromad beramiz.</p>
           <ul class="help" style="margin:0; padding-left:1rem;">
-            <li>Ushbu anketani to‘ldiring va biz siz bilan tez orada bog‘lanamiz.</li>
+            <li>Ushbu anketani to‘ldiring va biz siz bilan tez orada bog‘ланamiz.</li>
             <li>Vaqt: to‘ldirish uchun atigi 1–2 daqiqa.</li>
-            <li><strong>Eslatma:</strong> * yulduzcha bilan belgilangan maydonlar — majburiy.</li>
+            <li><strong>Eslatma:</strong> * yulduzcha bilan belgilangan maydonlar — majburий.</li>
           </ul>
           <div style="margin-top:16px"><button class="btn" id="cta2">Anketaga o‘tish</button></div>
         </div>
@@ -111,6 +111,8 @@
 
           <input type="hidden" id="lastName"  name="lastName" />
           <input type="hidden" id="middleName" name="middleName" />
+          <!-- ⬇️ ДОБАВЛЕНО: chat_id из бота для конверсии -->
+          <input type="hidden" id="funnel_c" name="c" />
 
           <div class="grid">
             <div class="field">
@@ -227,6 +229,15 @@
       const form = document.getElementById('form');
       const formCard = form.closest('.card');
 
+      // ⬇️ ДОБАВЛЕНО: сохранить ?c=... и проставить в скрытое поле
+      (function persistChatId(){
+        const cParam = new URLSearchParams(location.search).get('c');
+        if (cParam) localStorage.setItem('funnel_c', cParam);
+        const savedC = localStorage.getItem('funnel_c');
+        const cInput = document.getElementById('funnel_c');
+        if (savedC && cInput) cInput.value = savedC;
+      })();
+
       function goToForm(){
         apply.scrollIntoView({ behavior:'smooth', block:'start' });
         formCard.classList.add('highlight');
@@ -293,7 +304,7 @@
         firstName: (el) => { const v=el.value.trim(); if(!v) return "Iltimos, to‘liq ismingizni yozing."; if(v.length<2) return "Kamida 2 ta belgi bo‘lishi kerak."; return ''; },
         phone: (el) => { const v=el.value.trim(); if(!v) return "Telefon raqamini kiriting."; const re=/^[0-9+()\s-]{7,20}$/; if(!re.test(v)) return "Telefon formati noto‘g‘ri."; return ''; },
         email: (el) => { const v=el.value.trim(); if(!v) return "Email manzilini kiriting."; if(!el.checkValidity()) return "Email noto‘g‘ri."; return ''; },
-        about: (el) => { const v=el.value.trim(); if(!v) return "1–2 jumla yozing."; if(v.length<20) return "Kamida 20 ta belgi."; if(v.length>600) return "Ko‘pi bilan 600 ta belgi."; return ''; },
+        about: (el) => { const v=el.value.trim(); if(!v) return "1–2 jumla yozing."; if(v.length<20) return "Kamida 20 ta belgi."; if(v.length>600) return "Ko‘пи билан 600 ta belgi."; return ''; },
         photo: () => {
           const f = photoInput.files?.[0]; if(!f) return '';
           const okMimes = ["image/jpeg","image/png","image/webp","image/gif"];

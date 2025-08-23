@@ -2,6 +2,9 @@ import os
 import re
 import html
 import mimetypes
+import json
+import hmac
+import hashlib
 import requests
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify, render_template, Response
@@ -10,6 +13,18 @@ from flask import Flask, request, jsonify, render_template, Response
 load_dotenv()
 FORM_BOT_TOKEN = os.getenv("FORM_BOT_TOKEN")
 FORM_CHAT_ID   = os.getenv("FORM_CHAT_ID")   # @groupusername или -100...
+
+# URL вебхука бота-воронки:
+# 1) задаёшь напрямую FUNNEL_SUBMIT_URL, например: https://my-funnel.onrender.com/submitted
+#    или
+# 2) задаёшь FUNNEL_BASE_URL, тогда возьмём {FUNNEL_BASE_URL}/submitted
+FUNNEL_SUBMIT_URL = os.getenv("FUNNEL_SUBMIT_URL")
+if not FUNNEL_SUBMIT_URL:
+    base = os.getenv("FUNNEL_BASE_URL")
+    if base:
+        FUNNEL_SUBMIT_URL = base.rstrip("/") + "/submitted"
+# Секрет для подписи HMAC (должен совпадать с тем, что в боте-воронке)
+FUNNEL_SIGNING_SECRET = os.getenv("FUNNEL_SIGNING_SECRET", "")
 
 if not FORM_BOT_TOKEN or not FORM_CHAT_ID:
     raise RuntimeError("Задайте FORM_BOT_TOKEN и FORM_CHAT_ID в .env / Render env")
@@ -170,6 +185,29 @@ def send_to_telegram(data: dict, photo_file=None) -> None:
             timeout=15,
         )
 
+def notify_funnel_if_any(chat_id_str: str, form_data: dict):
+    """Шлём уведомление боту-воронке о том, что заявка подана (если сконфигурирован вебхук и есть c)."""
+    if not chat_id_str or not FUNNEL_SUBMIT_URL:
+        return
+    payload = {
+        "chat_id": chat_id_str.strip(),
+        "event": "form_submitted",
+        # чуть контекста — по желанию
+        "firstName": form_data.get("firstName"),
+        "phone": form_data.get("phone"),
+        "email": form_data.get("email"),
+    }
+    body = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    headers = {"Content-Type": "application/json"}
+    if FUNNEL_SIGNING_SECRET:
+        sig = hmac.new(FUNNEL_SIGNING_SECRET.encode("utf-8"), body, hashlib.sha256).hexdigest()
+        headers["X-Signature-256"] = f"sha256={sig}"
+    try:
+        r = requests.post(FUNNEL_SUBMIT_URL, data=body, headers=headers, timeout=5)
+        r.raise_for_status()
+    except Exception as e:
+        # не роняем ответ пользователю, просто логируем
+        app.logger.warning(f"Funnel webhook failed: {e}")
 
 # --- Routes ---
 @app.get("/favicon.ico")
@@ -199,10 +237,13 @@ def submit():
         return jsonify({"ok": False, "errors": errors}), 400
 
     try:
+        # 1) в админ-чат
         send_to_telegram(data, photo)
+        # 2) в бота-воронку (если пришёл chat_id в скрытом поле c и настроен вебхук)
+        notify_funnel_if_any(data.get("c"), data)
     except Exception as e:
-        app.logger.exception("Telegram send failed")
-        return jsonify({"ok": False, "error": f"Ошибка Telegram: {e}"}), 502
+        app.logger.exception("Telegram/Funnel send failed")
+        return jsonify({"ok": False, "error": f"Ошибка отправки: {e}"}), 502
 
     return jsonify({"ok": True})
 
