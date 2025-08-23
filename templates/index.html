@@ -23,8 +23,8 @@
       background: linear-gradient(180deg, #0b0d12 0%, #0f1320 100%);
       color: var(--text);
       line-height: 1.6;
-      -webkit-text-size-adjust: 100%;              /* меньше шансов на неожиданный масштаб */
-      -webkit-tap-highlight-color: transparent;    /* без серого блика на iOS */
+      -webkit-text-size-adjust: 100%;
+      -webkit-tap-highlight-color: transparent;
     }
     .container { max-width: 960px; margin: 0 auto; padding: 24px; }
     .header {
@@ -42,7 +42,7 @@
       background: linear-gradient(90deg, var(--primary), var(--accent)); color: #fff;
       box-shadow: 0 8px 30px rgba(79,140,255,.35);
       transition: transform .2s ease, box-shadow .2s ease;
-      min-height: 48px; /* крупный тач-таргет */
+      min-height: 48px;
     }
     .btn:hover { transform: translateY(-1px); box-shadow: 0 12px 36px rgba(79,140,255,.45); }
     .btn:active { transform: translateY(0); }
@@ -63,9 +63,7 @@
     @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
 
     label { display: block; font-weight: 600; margin: 8px 0 6px; }
-    input, textarea, button {
-      font-size: 16px; /* предотвращает iOS зум при фокусе */
-    }
+    input, textarea, button { font-size: 16px; }
     input, textarea {
       width: 100%; background: #0c111a; color: var(--text);
       border: 1px solid rgba(255,255,255,.08); border-radius: 12px;
@@ -88,24 +86,20 @@
     small.req { color: var(--muted); font-weight: 500; margin-left: 8px; }
     .field { margin-bottom: 12px; }
 
-    /* ——— Мобильные улучшения ——— */
     @media (max-width: 760px) {
       .container { padding: 16px; }
       .hero { padding: 56px 0 24px; }
-      .btn { width: 100%; } /* кнопки на всю ширину */
-      body { padding-bottom: calc(76px + env(safe-area-inset-bottom)); } /* запас под плавающую CTA */
+      .btn { width: 100%; }
+      body { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
     }
 
-    /* Плавающая мобильная CTA */
     .mobile-cta {
       position: fixed; left: 16px; right: 16px;
       bottom: calc(12px + env(safe-area-inset-bottom));
-      display: none; /* только на мобилках */
-      z-index: 150;
+      display: none; z-index: 150;
     }
     @media (max-width: 760px) { .mobile-cta { display: block; } }
 
-    /* Пользователи с reduced motion — без анимаций */
     @media (prefers-reduced-motion: reduce) {
       * { animation: none !important; transition: none !important; }
       .btn:hover { transform: none; }
@@ -116,7 +110,7 @@
   <header class="header">
     <div class="container inner">
       <div class="logo">Анкета</div>
-      <button class="btn" id="cta">Подать заявку</button>
+      <button class="btn" id="cta">Podat’ ariza</button>
     </div>
   </header>
 
@@ -124,14 +118,18 @@
     <section class="hero">
       <div class="container">
         <div class="card">
-          <h1>Коротко о программе</h1>
-          <p>Оставьте заявку и расскажите о себе. Мы свяжемся с вами, чтобы подтвердить участие и ответить на вопросы.</p>
+          <h1>Qisqacha dastur haqida (intro text для анкеты)</h1>
+          <p>Biz NEXT LEVEL jamoasimiz.</p>
+          <p>Bizning maqsadimiz — yangi yuzlarni topish va JIETTI brendi uchun ambassadorga aylantirish.
+            Agar siz bloger bo‘lsangiz yoki endi boshlayotgan bo‘lsangiz — biz sizni qidiryapmiz!</p>
+          <p>Siz kontent yaratasiz, biz esa mahsulot, qo‘llab-quvvatlash va barqaror daromad beramiz.</p>
           <ul class="help" style="margin:0; padding-left:1rem;">
-            <li>Заполнение займёт ~1–2 минуты.</li>
-            <li>Поля с пометкой «обязательно» — обязательны.</li>
+            <li>Ushbu anketani to‘ldiring va biz siz bilan tez orada bog‘lanamiz.</li>
+            <li>Vaqt: to‘ldirish uchun atigi 1–2 daqiqa.</li>
+            <li><strong>Eslatma:</strong> * yulduzcha bilan belgilangan maydonlar — majburiy.</li>
           </ul>
           <div style="margin-top:16px">
-            <button class="btn" id="cta2">Перейти к форме</button>
+            <button class="btn" id="cta2">Anketaga o‘tish</button>
           </div>
         </div>
       </div>
@@ -140,68 +138,104 @@
     <section id="apply" class="section">
       <div class="container">
         <form class="card" id="form" novalidate>
-          <h2 style="margin-top:0">Заявка на участие</h2>
+          <h2 style="margin-top:0">Zayavka</h2>
+
+          <!-- скрытые поля для совместимости с бэком -->
+          <input type="hidden" id="lastName"  name="lastName" />
+          <input type="hidden" id="middleName" name="middleName" />
 
           <div class="grid">
             <div class="field">
-              <label for="firstName">Имя <small class="req">(обязательно)</small></label>
-              <input id="firstName" name="firstName" type="text" placeholder="Иван"
-                     autocomplete="given-name" required minlength="2" maxlength="50" />
+              <label for="firstName">Ф.И.О. (to‘liq ismingizni yozing) <small class="req">*</small></label>
+              <input id="firstName" name="firstName" type="text" placeholder="Familiya Ism Sharif"
+                     required minlength="2" maxlength="120" />
               <div class="error" id="err-firstName"></div>
             </div>
 
             <div class="field">
-              <label for="lastName">Фамилия <small class="req">(обязательно)</small></label>
-              <input id="lastName" name="lastName" type="text" placeholder="Иванов"
-                     autocomplete="family-name" required minlength="2" maxlength="60" />
-              <div class="error" id="err-lastName"></div>
-            </div>
-
-            <div class="field">
-              <label for="middleName">Отчество <small class="req">(необязательно)</small></label>
-              <input id="middleName" name="middleName" type="text" placeholder="Иванович"
-                     autocomplete="additional-name" minlength="2" maxlength="60" />
-              <div class="error" id="err-middleName"></div>
-            </div>
-
-            <div class="field">
-              <label for="phone">Номер телефона <small class="req">(обязательно)</small></label>
+              <label for="phone">Telefon raqamingiz (+998 ... formatida) <small class="req">*</small></label>
               <input id="phone" name="phone" type="tel" inputmode="tel"
                      placeholder="+998 90 123 45 67" autocomplete="tel" required
-                     pattern="^[0-9+()\\s\\-]{7,20}$"
-                     title="Введите телефон: допускаются цифры, пробелы, + ( ) -" />
-              <div class="help">Формат любой: +998 90 123-45-67 или +7 (999) 123-45-67</div>
+                     pattern="^[0-9+()\s\-]{7,20}$"
+                     title="+998..., raqamlar, bo‘sh joylar, + ( ) - belgilariga ruxsat" />
               <div class="error" id="err-phone"></div>
             </div>
 
             <div class="field">
-              <label for="email">Почта <small class="req">(обязательно)</small></label>
+              <label for="email">Email manzilingiz (rasmiy yoki faol ishlatadigan pochta) <small class="req">*</small></label>
               <input id="email" name="email" type="email" placeholder="name@example.com"
                      autocomplete="email" required />
               <div class="error" id="err-email"></div>
             </div>
 
             <div class="field">
-              <label for="about">О себе <small class="req">(обязательно)</small></label>
+              <label for="age">Yoshingiz (masalan: 23 yosh)</label>
+              <input id="age" name="age" type="number" min="10" max="120" placeholder="23" />
+              <div class="error" id="err-age"></div>
+            </div>
+
+            <div class="field">
+              <label for="city">Shahar / yashash joyingiz (Toshkent, Samarqand va h.k.)</label>
+              <input id="city" name="city" type="text" placeholder="Toshkent" maxlength="80" />
+              <div class="error" id="err-city"></div>
+            </div>
+
+            <div class="field">
+              <label for="instagram">Instagram nik yoki link</label>
+              <input id="instagram" name="instagram" type="text" placeholder="@username yoki https://..." />
+              <div class="error" id="err-instagram"></div>
+            </div>
+
+            <div class="field">
+              <label for="telegram">Telegram nik</label>
+              <input id="telegram" name="telegram" type="text" placeholder="@username" />
+              <div class="error" id="err-telegram"></div>
+            </div>
+
+            <div class="field">
+              <label for="tiktok">TikTok nik yoki link</label>
+              <input id="tiktok" name="tiktok" type="text" placeholder="@username yoki https://..." />
+              <div class="error" id="err-tiktok"></div>
+            </div>
+
+            <div class="field">
+              <label for="youtube">YouTube kanal linki</label>
+              <input id="youtube" name="youtube" type="url" placeholder="https://youtube.com/@username" />
+              <div class="error" id="err-youtube"></div>
+            </div>
+
+            <div class="field">
+              <label for="subs">Obunachilar soni</label>
+              <input id="subs" name="subs" type="number" min="0" step="1" placeholder="12345" />
+              <div class="error" id="err-subs"></div>
+            </div>
+
+            <div class="field" style="grid-column: 1 / -1;">
+              <label for="niche">Kontent yo‘nalishingiz (masalan: oilaviy blog, moda, lifestyle, taom, humor va h.k.)</label>
+              <input id="niche" name="niche" type="text" placeholder="Masalan: lifestyle, moda..." maxlength="200" />
+              <div class="error" id="err-niche"></div>
+            </div>
+
+            <div class="field" style="grid-column: 1 / -1;">
+              <label for="about">Nega biz bilan ishlashni xohlaysiz? (1–2 jumla yozing) <small class="req">*</small></label>
               <textarea id="about" name="about" rows="5"
-                        placeholder="Коротко расскажите о вашем опыте и целях"
+                        placeholder="Qisqa va aniq 1–2 jumla yozing"
                         required minlength="20" maxlength="600"></textarea>
-              <div class="help"><span id="count">0</span>/600 символов</div>
+              <div class="help"><span id="count">0</span>/600</div>
               <div class="error" id="err-about"></div>
             </div>
           </div>
 
-          <button class="btn" type="submit" style="margin-top:8px">Отправить заявку</button>
+          <button class="btn" type="submit" style="margin-top:8px">Yuborish</button>
           <div class="success" id="success" role="status" aria-live="polite">
-            Заявка отправлена. Спасибо! Мы свяжемся с вами по указанным контактам.
+            Arizangiz yuborildi. Rahmat! Tez orada siz bilan bog‘lanamiz.
           </div>
         </form>
       </div>
     </section>
   </main>
 
-  <!-- Плавающая мобильная кнопка -->
-  <button class="btn mobile-cta" id="ctaMobile">Подать заявку</button>
+  <button class="btn mobile-cta" id="ctaMobile">Podat’ ariza</button>
 
   <script>
     (function () {
@@ -220,14 +254,14 @@
       }
       [cta, cta2, ctaMobile].forEach(btn => btn && btn.addEventListener('click', goToForm));
 
-      // Счётчик символов "О себе"
+      // Counter
       const about = document.getElementById('about');
       const count = document.getElementById('count');
       function updateCount() { count.textContent = about.value.length; }
       about.addEventListener('input', updateCount);
       updateCount();
 
-      // Валидация
+      // Validation helpers
       function setError(input, message) {
         const field = input.closest('.field') || input.parentElement;
         field.classList.add('invalid');
@@ -240,41 +274,37 @@
         const err = field.querySelector('.error');
         if (err) { err.textContent = ''; err.style.display = 'none'; }
       }
+
       const validators = {
         firstName: (el) => {
-          if (!el.value.trim()) return 'Введите имя.';
-          if (el.value.trim().length < 2) return 'Имя должно быть не короче 2 символов.';
-          return '';
-        },
-        lastName: (el) => {
-          if (!el.value.trim()) return 'Введите фамилию.';
-          if (el.value.trim().length < 2) return 'Фамилия должна быть не короче 2 символов.';
-          return '';
-        },
-        middleName: (el) => {
-          if (el.value && el.value.trim().length < 2)
-            return 'Отчество должно быть не короче 2 символов или оставьте поле пустым.';
+          const v = el.value.trim();
+          if (!v) return "Iltimos, to‘liq ismingizni yozing.";
+          if (v.length < 2) return "Kamida 2 ta belgi bo‘lishi kerak.";
           return '';
         },
         phone: (el) => {
-          if (!el.value.trim()) return 'Укажите номер телефона.';
+          const v = el.value.trim();
+          if (!v) return "Telefon raqamini kiriting.";
           const re = /^[0-9+()\\s\\-]{7,20}$/;
-          if (!re.test(el.value.trim())) return 'Неверный формат телефона.';
+          if (!re.test(v)) return "Telefon formati noto‘g‘ri.";
           return '';
         },
         email: (el) => {
-          if (!el.value.trim()) return 'Укажите e-mail.';
-          if (!el.checkValidity()) return 'Неверный e-mail.';
+          const v = el.value.trim();
+          if (!v) return "Email manzilini kiriting.";
+          if (!el.checkValidity()) return "Email noto‘g‘ri.";
           return '';
         },
         about: (el) => {
           const v = el.value.trim();
-          if (!v) return 'Расскажите кратко о себе.';
-          if (v.length < 20) return 'Минимум 20 символов.';
-          if (v.length > 600) return 'Максимум 600 символов.';
+          if (!v) return "1–2 jumla yozing.";
+          if (v.length < 20) return "Kamida 20 ta belgi.";
+          if (v.length > 600) return "Ko‘pi bilan 600 ta belgi.";
           return '';
         }
       };
+
+      // Live validation
       form.querySelectorAll('input, textarea').forEach(el => {
         el.addEventListener('input', () => clearError(el));
         el.addEventListener('blur', () => {
@@ -286,29 +316,30 @@
         });
       });
 
-      // Отправка на бэкенд
+      // Submit
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
+        // Required: firstName, phone, email, about
         let firstInvalid = null, hasError = false;
-        for (const [id, fn] of Object.entries(validators)) {
+        ['firstName','phone','email','about'].forEach(id => {
           const el = document.getElementById(id);
-          const msg = fn(el);
-          if (msg) {
-            setError(el, msg);
-            if (!firstInvalid) firstInvalid = el;
-            hasError = true;
-          } else {
-            clearError(el);
-          }
-        }
+          const msg = validators[id](el);
+          if (msg) { setError(el, msg); firstInvalid ??= el; hasError = true; }
+        });
         if (hasError) { firstInvalid?.focus(); return; }
+
+        // для совместимости с бэком: разложим ФИО в lastName/middleName при необходимости
+        const fio = (document.getElementById('firstName').value || '').trim();
+        const parts = fio.split(/\s+/);
+        document.getElementById('lastName').value   = parts[0] || fio;      // фамилия или всё ФИО
+        document.getElementById('middleName').value = parts.slice(2).join(' '); // отчество (если есть)
 
         const data = Object.fromEntries(new FormData(form).entries());
         const submitBtn = form.querySelector('button[type="submit"]');
         submitBtn.disabled = true;
         const oldText = submitBtn.textContent;
-        submitBtn.textContent = 'Отправка...';
+        submitBtn.textContent = 'Yuborilmoqda...';
 
         try {
           const resp = await fetch('/submit', {
@@ -325,7 +356,7 @@
                 if (el) setError(el, v);
               });
             } else {
-              alert(payload?.error || 'Ошибка отправки. Попробуйте позже.');
+              alert(payload?.error || 'Xatolik yuz berdi. Keyinroq urinib ko‘ring.');
             }
             return;
           }
@@ -333,12 +364,10 @@
           document.getElementById('success').style.display = 'block';
           form.reset();
           updateCount();
-
-          // Поднимем пользователя к сообщению об успехе на мобильных
           document.querySelector('#apply').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
         } catch (err) {
-          alert('Сеть недоступна или сервер не отвечает.');
+          alert('Tarmoq xatosi: server javob bermadi.');
           console.error(err);
         } finally {
           submitBtn.disabled = false;
