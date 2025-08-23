@@ -88,17 +88,44 @@ def tg_send_message(chat_id, text, parse_mode=None):
 
 # Сообщение с анкеты -> в указанный чат (группа/ЛС/канал)
 def send_form_to_telegram(data: dict) -> None:
-    esc = lambda s: html.escape(s or "", quote=True)
-    text = (
-        f"<b>Новая анкета</b>\n"
-        f"Имя: <b>{esc(data.get('firstName'))}</b>\n"
-        f"Фамилия: <b>{esc(data.get('lastName'))}</b>\n"
-        f"Отчество: {esc(data.get('middleName'))}\n"
-        f"Телефон: {esc(data.get('phone'))}\n"
-        f"Почта: {esc(data.get('email'))}\n"
-        f"О себе:\n{esc(data.get('about'))}"
-    )
-    tg_send_message(_normalize_chat_id(ADMIN_CHAT_ID), text, parse_mode="HTML")
+    esc = lambda s: html.escape((s or "").strip(), quote=True)
+
+    lines = [
+        "<b>Yangi ariza</b>",
+        f"F.I.O.: <b>{esc(data.get('firstName'))}</b>",
+        f"Telefon: {esc(data.get('phone'))}",
+        f"Email: {esc(data.get('email'))}",
+    ]
+
+    # необязательные поля — добавляем, только если заполнены
+    opt = [
+        ("Yoshi", "age"),
+        ("Shahar / yashash joyi", "city"),
+        ("Instagram", "instagram"),
+        ("Telegram", "telegram"),
+        ("TikTok", "tiktok"),
+        ("YouTube", "youtube"),
+        ("Obunachilar soni", "subs"),
+        ("Kontent yo‘nalishi", "niche"),
+    ]
+    for label, key in opt:
+        val = (data.get(key) or "").strip()
+        if val:
+            lines.append(f"{label}: {esc(val)}")
+
+    lines.append("Nega biz bilan ishlashni xohlaysiz?")
+    lines.append(esc(data.get("about")))
+
+    text = "\n".join(lines)
+
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+    r = requests.post(url, json={
+        "chat_id": _normalize_chat_id(ADMIN_CHAT_ID),
+        "text": text,
+        "parse_mode": "HTML",
+        "disable_web_page_preview": True,
+    }, timeout=10)
+    r.raise_for_status()
 
 # ====== Обработчики Flask ======
 @app.get("/")
