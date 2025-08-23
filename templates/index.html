@@ -5,143 +5,76 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Анкета — Подать заявку</title>
   <style>
-    :root {
-      --bg: #0b0d12;
-      --card: #12151b;
-      --muted: #8b95a7;
-      --primary: #4f8cff;
-      --accent: #22d3ee;
-      --error: #ef4444;
-      --ring: rgba(79, 140, 255, .35);
-      --text: #e6e9ef;
-    }
+    :root { --bg:#0b0d12; --card:#12151b; --muted:#8b95a7; --primary:#4f8cff; --accent:#22d3ee; --error:#ef4444; --ring:rgba(79,140,255,.35); --text:#e6e9ef; }
     * { box-sizing: border-box; }
     html, body { height: 100%; }
     body {
-      margin: 0;
-      font-family: Inter, system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-      background: linear-gradient(180deg, #0b0d12 0%, #0f1320 100%);
-      color: var(--text);
-      line-height: 1.6;
-      -webkit-text-size-adjust: 100%;
-      -webkit-tap-highlight-color: transparent;
+      margin:0; font-family: Inter, system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background:linear-gradient(180deg,#0b0d12 0%,#0f1320 100%); color:var(--text); line-height:1.6;
+      -webkit-text-size-adjust:100%; -webkit-tap-highlight-color:transparent;
     }
-    .container { max-width: 960px; margin: 0 auto; padding: 24px; }
-    .header {
-      position: sticky; top: 0; z-index: 100;
-      backdrop-filter: blur(8px);
-      background: rgba(11,13,18,.6);
-      border-bottom: 1px solid rgba(255,255,255,.06);
-    }
-    .header .inner { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-    .logo { font-weight: 700; letter-spacing: .3px; }
+    .container { max-width:960px; margin:0 auto; padding:24px; }
+    .header { position:sticky; top:0; z-index:100; backdrop-filter:blur(8px); background:rgba(11,13,18,.6); border-bottom:1px solid rgba(255,255,255,.06); }
+    .header .inner { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .logo { font-weight:700; letter-spacing:.3px; }
 
     .btn {
-      appearance: none; border: 0; border-radius: 12px;
-      padding: 12px 18px; font-weight: 600; cursor: pointer;
-      background: linear-gradient(90deg, var(--primary), var(--accent)); color: #fff;
-      box-shadow: 0 8px 30px rgba(79,140,255,.35);
-      transition: transform .2s ease, box-shadow .2s ease;
-      min-height: 48px;
+      appearance:none; border:0; border-radius:12px; padding:12px 18px; font-weight:600; cursor:pointer;
+      background:linear-gradient(90deg,var(--primary),var(--accent)); color:#fff;
+      box-shadow:0 8px 30px rgba(79,140,255,.35); transition:transform .2s ease, box-shadow .2s ease; min-height:48px;
     }
-    .btn:hover { transform: translateY(-1px); box-shadow: 0 12px 36px rgba(79,140,255,.45); }
-    .btn:active { transform: translateY(0); }
+    .btn:hover { transform:translateY(-1px); box-shadow:0 12px 36px rgba(79,140,255,.45); }
+    .btn:active { transform:translateY(0); }
 
-    .hero { padding: 72px 0 36px; }
-    .hero h1 { font-size: clamp(28px, 4vw, 44px); line-height: 1.1; margin: 0 0 12px; }
-    .hero p { color: var(--muted); max-width: 720px; margin: 0 0 24px; }
+    .hero { padding:72px 0 36px; }
+    .hero h1 { font-size:clamp(28px,4vw,44px); line-height:1.1; margin:0 0 12px; }
+    .hero p { color:var(--muted); max-width:720px; margin:0 0 24px; }
 
-    .card {
-      background: var(--card);
-      border: 1px solid rgba(255,255,255,.06);
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: 0 10px 40px rgba(0,0,0,.35);
-    }
+    .card { background:var(--card); border:1px solid rgba(255,255,255,.06); border-radius:16px; padding:24px; box-shadow:0 10px 40px rgba(0,0,0,.35); }
 
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    @media (max-width:760px) { .grid { grid-template-columns:1fr; } }
 
-    label { display: block; font-weight: 600; margin: 8px 0 6px; }
-    input, textarea, button { font-size: 16px; }
+    label { display:block; font-weight:600; margin:8px 0 6px; }
+    input, textarea, button { font-size:16px; }
     input, textarea {
-      width: 100%; background: #0c111a; color: var(--text);
-      border: 1px solid rgba(255,255,255,.08); border-radius: 12px;
-      padding: 12px 14px; outline: none;
-      transition: border-color .2s, box-shadow .2s;
+      width:100%; background:#0c111a; color:var(--text); border:1px solid rgba(255,255,255,.08); border-radius:12px;
+      padding:12px 14px; outline:none; transition:border-color .2s, box-shadow .2s;
     }
-    input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 6px var(--ring); }
-    input::placeholder, textarea::placeholder { color: #6b7280; }
-    .help { font-size: 12px; color: var(--muted); margin-top: 6px; }
-    .error { color: var(--error); font-size: 13px; margin-top: 6px; display: none; }
-    .invalid input, .invalid textarea { border-color: var(--error); }
-    .section { padding: 24px 0 72px; }
-    #apply.card { margin-top: 12px; }
-    .success {
-      display: none; margin-top: 16px; padding: 12px 14px; border-radius: 12px;
-      background: rgba(34,211,238,.12); border: 1px solid rgba(34,211,238,.35);
-    }
-    .highlight { animation: flash 2s ease 1; }
-    @keyframes flash { 0% { box-shadow: 0 0 0 0 rgba(79,140,255,.7); } 100% { box-shadow: 0 0 0 0 rgba(79,140,255,0); } }
-    small.req { color: var(--muted); font-weight: 500; margin-left: 8px; }
-    .field { margin-bottom: 12px; }
+    input:focus, textarea:focus { border-color:var(--primary); box-shadow:0 0 0 6px var(--ring); }
+    input::placeholder, textarea::placeholder { color:#6b7280; }
+    .help { font-size:12px; color:var(--muted); margin-top:6px; }
+    .error { color:var(--error); font-size:13px; margin-top:6px; display:none; }
+    .invalid input, .invalid textarea { border-color:var(--error); }
+    .section { padding:24px 0 72px; }
+    #apply.card { margin-top:12px; }
+    .success { display:none; margin-top:16px; padding:12px 14px; border-radius:12px; background:rgba(34,211,238,.12); border:1px solid rgba(34,211,238,.35); }
+    .highlight { animation:flash 2s ease 1; }
+    @keyframes flash { 0%{ box-shadow:0 0 0 0 rgba(79,140,255,.7); } 100%{ box-shadow:0 0 0 0 rgba(79,140,255,0); } }
+    small.req { color:var(--muted); font-weight:500; margin-left:8px; }
+    .field { margin-bottom:12px; }
 
-    /* --- Dropzone (фото) --- */
+    /* file input visually hidden */
+    .file-input { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap; border:0; }
+
+    /* Dropzone */
     .dropzone {
-      position: relative;
-      border: 2px dashed rgba(255,255,255,.15);
-      border-radius: 16px;
-      background: #0c111a;
-      min-height: 220px;              /* побольше зоны */
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer;
-      transition: border-color .2s, box-shadow .2s, background .2s;
-      overflow: hidden;
+      position:relative; border:2px dashed rgba(255,255,255,.15); border-radius:16px; background:#0c111a;
+      min-height:240px; display:flex; align-items:center; justify-content:center; cursor:pointer;
+      transition:border-color .2s, box-shadow .2s, background .2s; overflow:hidden;
     }
-    .dropzone.hover {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 6px var(--ring);
-      background: #0c111aee;
-    }
-    .dz-inner {
-      display: flex; align-items: center; justify-content: center; flex-direction: column;
-      gap: 10px; text-align: center; color: var(--muted); padding: 16px;
-      pointer-events: none;
-    }
-    .dz-plus {
-      width: 80px; height: 80px; border-radius: 50%;
-      background: linear-gradient(90deg, var(--primary), var(--accent));
-      color: #fff; display: flex; align-items: center; justify-content: center;
-      font-size: 44px; font-weight: 700; box-shadow: 0 10px 30px rgba(79,140,255,.35);
-    }
-    .dz-text { font-size: 14px; line-height: 1.35; }
-    .dz-text small { color: #6b7280; display: block; margin-top: 6px; }
+    .dropzone.hover { border-color:var(--accent); box-shadow:0 0 0 6px var(--ring); background:#0c111aee; }
+    .dz-inner { display:flex; align-items:center; justify-content:center; flex-direction:column; gap:10px; text-align:center; color:var(--muted); padding:16px; pointer-events:none; }
+    .dz-plus { width:96px; height:96px; border-radius:50%; background:linear-gradient(90deg,var(--primary),var(--accent)); color:#fff; display:flex; align-items:center; justify-content:center; font-size:52px; font-weight:700; box-shadow:0 10px 30px rgba(79,140,255,.35); }
+    .dz-text { font-size:14px; line-height:1.35; }
+    .dz-text small { color:#6b7280; display:block; margin-top:6px; }
 
-    .dz-preview {
-      position: absolute; inset: 10px;
-      border-radius: 12px; object-fit: contain;
-      max-width: calc(100% - 20px); max-height: calc(100% - 20px);
-      display: none;
-    }
+    .dz-preview { position:absolute; inset:10px; border-radius:12px; object-fit:contain; max-width:calc(100% - 20px); max-height:calc(100% - 20px); display:none; }
 
-    @media (max-width: 760px) {
-      .container { padding: 16px; }
-      .hero { padding: 56px 0 24px; }
-      .btn { width: 100%; }
-      body { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
-    }
-
-    .mobile-cta {
-      position: fixed; left: 16px; right: 16px;
-      bottom: calc(12px + env(safe-area-inset-bottom));
-      display: none; z-index: 150;
-    }
-    @media (max-width: 760px) { .mobile-cta { display: block; } }
-
-    @media (prefers-reduced-motion: reduce) {
-      * { animation: none !important; transition: none !important; }
-      .btn:hover { transform: none; }
-    }
+    @media (max-width:760px){ .container{padding:16px;} .hero{padding:56px 0 24px;} .btn{width:100%;} body{padding-bottom:calc(76px + env(safe-area-inset-bottom));} }
+    .mobile-cta{ position:fixed; left:16px; right:16px; bottom:calc(12px + env(safe-area-inset-bottom)); display:none; z-index:150; }
+    @media (max-width:760px){ .mobile-cta{ display:block; } }
+    @media (prefers-reduced-motion:reduce){ *{animation:none!important; transition:none!important;} .btn:hover{transform:none;} }
   </style>
 </head>
 <body>
@@ -166,27 +99,23 @@
             <li>Vaqt: to‘ldirish uchun atigi 1–2 daqiqa.</li>
             <li><strong>Eslatma:</strong> * yulduzcha bilan belgilangan maydonlar — majburiy.</li>
           </ul>
-          <div style="margin-top:16px">
-            <button class="btn" id="cta2">Anketaga o‘tish</button>
-          </div>
+          <div style="margin-top:16px"><button class="btn" id="cta2">Anketaga o‘tish</button></div>
         </div>
       </div>
     </section>
 
     <section id="apply" class="section">
       <div class="container">
-        <form class="card" id="form" novalidate>
+        <form class="card" id="form" novalidate enctype="multipart/form-data">
           <h2 style="margin-top:0">Zayavka</h2>
 
-          <!-- скрытые поля для совместимости с бэком -->
           <input type="hidden" id="lastName"  name="lastName" />
           <input type="hidden" id="middleName" name="middleName" />
 
           <div class="grid">
             <div class="field">
               <label for="firstName">Ф.И.О. (to‘liq ismingizni yozing) <small class="req">*</small></label>
-              <input id="firstName" name="firstName" type="text" placeholder="Familiya Ism Sharif"
-                     required minlength="2" maxlength="120" />
+              <input id="firstName" name="firstName" type="text" placeholder="Familiya Ism Sharif" required minlength="2" maxlength="120" />
               <div class="error" id="err-firstName"></div>
             </div>
 
@@ -194,15 +123,14 @@
               <label for="phone">Telefon raqamingiz (+998 ... formatida) <small class="req">*</small></label>
               <input id="phone" name="phone" type="tel" inputmode="tel"
                      placeholder="+998 90 123 45 67" autocomplete="tel" required
-                     pattern="^[0-9+()\\s\\-]{7,20}$"
+                     pattern="^[0-9+()\s-]{7,20}$"
                      title="+998..., raqamlar, bo‘sh joylar, + ( ) - belgilariga ruxsat" />
               <div class="error" id="err-phone"></div>
             </div>
 
             <div class="field">
               <label for="email">Email manzilingiz (rasmiy yoki faol ishlatadigan pochta) <small class="req">*</small></label>
-              <input id="email" name="email" type="email" placeholder="name@example.com"
-                     autocomplete="email" required />
+              <input id="email" name="email" type="email" placeholder="name@example.com" autocomplete="email" required />
               <div class="error" id="err-email"></div>
             </div>
 
@@ -248,26 +176,23 @@
               <div class="error" id="err-subs"></div>
             </div>
 
-            <div class="field" style="grid-column: 1 / -1;">
+            <div class="field" style="grid-column:1 / -1;">
               <label for="niche">Kontent yo‘nalishingiz (masalan: oilaviy blog, moda, lifestyle, taom, humor va h.k.)</label>
               <input id="niche" name="niche" type="text" placeholder="Masalan: lifestyle, moda..." maxlength="200" />
               <div class="error" id="err-niche"></div>
             </div>
 
-            <div class="field" style="grid-column: 1 / -1;">
+            <div class="field" style="grid-column:1 / -1;">
               <label for="about">Nega biz bilan ishlashni xohlaysiz? (1–2 jumla yozing) <small class="req">*</small></label>
-              <textarea id="about" name="about" rows="5"
-                        placeholder="Qisqa va aniq 1–2 jumla yozing"
-                        required minlength="20" maxlength="600"></textarea>
+              <textarea id="about" name="about" rows="5" placeholder="Qisqa va aniq 1–2 jumla yozing" required minlength="20" maxlength="600"></textarea>
               <div class="help"><span id="count">0</span>/600</div>
               <div class="error" id="err-about"></div>
             </div>
 
-            <!-- Новая dropzone для фото -->
-            <div class="field" style="grid-column: 1 / -1;">
-              <input id="photo" name="photo" type="file"
-                     accept="image/jpeg,image/png,image/webp,image/gif" hidden />
-              <div id="dropzone" class="dropzone" role="button" tabindex="0" aria-label="Foto yuklash">
+            <!-- Dropzone для фото -->
+            <div class="field" style="grid-column:1 / -1;">
+              <input id="photo" name="photo" type="file" class="file-input" accept="image/jpeg,image/png,image/webp,image/gif" />
+              <label id="dropzone" for="photo" class="dropzone" role="button" tabindex="0" aria-label="Foto yuklash">
                 <div class="dz-inner">
                   <div class="dz-plus">+</div>
                   <div class="dz-text">
@@ -277,7 +202,7 @@
                   </div>
                 </div>
                 <img id="photoPreview" class="dz-preview" alt="Foto preview">
-              </div>
+              </label>
               <div class="error" id="err-photo"></div>
             </div>
           </div>
@@ -294,7 +219,7 @@
   <button class="btn mobile-cta" id="ctaMobile">Topshirish</button>
 
   <script>
-    (function () {
+    (function(){
       const cta  = document.getElementById('cta');
       const cta2 = document.getElementById('cta2');
       const ctaMobile = document.getElementById('ctaMobile');
@@ -302,133 +227,119 @@
       const form = document.getElementById('form');
       const formCard = form.closest('.card');
 
-      function goToForm() {
-        apply.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      function goToForm(){
+        apply.scrollIntoView({ behavior:'smooth', block:'start' });
         formCard.classList.add('highlight');
-        setTimeout(() => formCard.classList.remove('highlight'), 1600);
-        setTimeout(() => document.getElementById('firstName').focus({ preventScroll: true }), 600);
+        setTimeout(()=>formCard.classList.remove('highlight'),1600);
+        setTimeout(()=>document.getElementById('firstName').focus({ preventScroll:true }),600);
       }
       [cta, cta2, ctaMobile].forEach(btn => btn && btn.addEventListener('click', goToForm));
 
-      // Счётчик
+      // Counter
       const about = document.getElementById('about');
       const count = document.getElementById('count');
-      function updateCount() { count.textContent = about.value.length; }
-      about.addEventListener('input', updateCount);
-      updateCount();
+      function updateCount(){ count.textContent = about.value.length; }
+      about.addEventListener('input', updateCount); updateCount();
 
-      // ---- Dropzone / preview ----
+      // Dropzone / preview
       const photoInput = document.getElementById('photo');
       const dz = document.getElementById('dropzone');
       const dzInner = dz.querySelector('.dz-inner');
       const preview = document.getElementById('photoPreview');
+      let previewUrl = null;
 
-      function openChooser() { photoInput.click(); }
-      dz.addEventListener('click', openChooser);
-      dz.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openChooser(); }
-      });
-
-      dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('hover'); });
+      dz.addEventListener('dragenter', e => { e.preventDefault(); dz.classList.add('hover'); });
+      dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('hover'); });
       dz.addEventListener('dragleave', () => dz.classList.remove('hover'));
       dz.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dz.classList.remove('hover');
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-          photoInput.files = e.dataTransfer.files; // назначаем файл инпуту
-          handleFile();
-        }
+        e.preventDefault(); dz.classList.remove('hover');
+        const f = e.dataTransfer.files && e.dataTransfer.files[0];
+        if (!f) return;
+        const dt = new DataTransfer(); dt.items.add(f);
+        photoInput.files = dt.files;
+        handleFile();
       });
-
       photoInput.addEventListener('change', handleFile);
 
-      function handleFile() {
+      function handleFile(){
         const f = photoInput.files?.[0];
-        if (!f) {
-          preview.style.display = 'none';
-          preview.removeAttribute('src');
-          dzInner.style.display = 'flex';
+        if (!f){
+          if (previewUrl){ URL.revokeObjectURL(previewUrl); previewUrl = null; }
+          preview.style.display='none'; preview.removeAttribute('src'); dzInner.style.display='flex';
           return;
         }
-        const url = URL.createObjectURL(f);
-        preview.src = url;
-        preview.style.display = 'block';
-        dzInner.style.display = 'none';
+        if (previewUrl){ URL.revokeObjectURL(previewUrl); previewUrl = null; }
+        previewUrl = URL.createObjectURL(f);
+        preview.src = previewUrl;
+        preview.style.display='block';
+        dzInner.style.display='none';
       }
 
-      // ---- Валидация ----
-      function setError(input, message) {
+      // Validation
+      function setError(input, message){
         const field = (input.closest && input.closest('.field')) || input.parentElement || dz.parentElement;
         field.classList.add('invalid');
         const err = field.querySelector('.error');
-        if (err) { err.textContent = message; err.style.display = 'block'; }
+        if (err){ err.textContent = message; err.style.display = 'block'; }
       }
-      function clearError(input) {
+      function clearError(input){
         const field = (input.closest && input.closest('.field')) || input.parentElement || dz.parentElement;
         field.classList.remove('invalid');
         const err = field.querySelector('.error');
-        if (err) { err.textContent = ''; err.style.display = 'none'; }
+        if (err){ err.textContent=''; err.style.display='none'; }
       }
 
       const validators = {
-        firstName: (el) => { const v = el.value.trim(); if (!v) return "Iltimos, to‘liq ismingizni yozing."; if (v.length < 2) return "Kamida 2 ta belgi bo‘lishi kerak."; return ''; },
-        phone: (el) => { const v = el.value.trim(); if (!v) return "Telefon raqamini kiriting."; const re=/^[0-9+()\\s\\-]{7,20}$/; if(!re.test(v)) return "Telefon formati noto‘g‘ri."; return ''; },
-        email: (el) => { const v = el.value.trim(); if (!v) return "Email manzilini kiriting."; if (!el.checkValidity()) return "Email noto‘g‘ri."; return ''; },
-        about: (el) => { const v = el.value.trim(); if (!v) return "1–2 jumla yozing."; if (v.length < 20) return "Kamida 20 ta belgi."; if (v.length > 600) return "Ko‘pi bilan 600 ta belgi."; return ''; },
+        firstName: (el) => { const v=el.value.trim(); if(!v) return "Iltimos, to‘liq ismingizni yozing."; if(v.length<2) return "Kamida 2 ta belgi bo‘lishi kerak."; return ''; },
+        phone: (el) => { const v=el.value.trim(); if(!v) return "Telefon raqamini kiriting."; const re=/^[0-9+()\s-]{7,20}$/; if(!re.test(v)) return "Telefon formati noto‘g‘ri."; return ''; },
+        email: (el) => { const v=el.value.trim(); if(!v) return "Email manzilini kiriting."; if(!el.checkValidity()) return "Email noto‘g‘ri."; return ''; },
+        about: (el) => { const v=el.value.trim(); if(!v) return "1–2 jumla yozing."; if(v.length<20) return "Kamida 20 ta belgi."; if(v.length>600) return "Ko‘pi bilan 600 ta belgi."; return ''; },
         photo: () => {
-          const f = photoInput.files?.[0];
-          if (!f) return '';
-          const ok = ["image/jpeg","image/png","image/webp","image/gif"];
-          if (!ok.includes(f.type)) return "Faqat JPG/PNG/WEBP/GIF ruxsat etiladi.";
+          const f = photoInput.files?.[0]; if(!f) return '';
+          const okMimes = ["image/jpeg","image/png","image/webp","image/gif"];
+          const byMime = f.type && okMimes.includes(f.type.toLowerCase());
+          const byExt  = /\.(jpe?g|png|webp|gif)$/i.test((f.name||'').toLowerCase());
+          if (!(byMime || byExt)) return "Faqat JPG/PNG/WEBP/GIF ruxsat etiladi.";
           if (f.size > 10*1024*1024) return "Hajmi 10 MB dan oshmasin.";
           return '';
         }
       };
 
       form.querySelectorAll('input, textarea').forEach(el => {
-        if (el === photoInput) return; // фото обрабатываем сами
+        if (el === photoInput) return;
         el.addEventListener('input', () => clearError(el));
-        el.addEventListener('blur', () => {
-          const id = el.id;
-          if (validators[id]) {
-            const msg = validators[id](el);
-            msg ? setError(el, msg) : clearError(el);
-          }
-        });
+        el.addEventListener('blur', () => { const id=el.id; if(validators[id]){ const msg=validators[id](el); msg?setError(el,msg):clearError(el); }});
       });
 
-      // ---- Submit (multipart) ----
+      // Submit (multipart)
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
         let firstInvalid = null, hasError = false;
         ['firstName','phone','email','about','photo'].forEach(id => {
-          const el = (id === 'photo') ? photoInput : document.getElementById(id);
+          const el = (id==='photo') ? photoInput : document.getElementById(id);
           const msg = validators[id](el);
-          if (msg) { setError(el, msg); firstInvalid ??= el; hasError = true; }
+          if (msg){ setError(el,msg); if(!firstInvalid) firstInvalid = el; hasError = true; }
         });
-        if (hasError) { (firstInvalid?.focus?.())?.(); return; }
+        if (hasError){ (firstInvalid?.focus?.())?.(); return; }
 
-        // разложим ФИО (как и раньше)
         const fio = (document.getElementById('firstName').value || '').trim();
         const parts = fio.split(/\s+/);
         document.getElementById('lastName').value   = parts[0] || fio;
         document.getElementById('middleName').value = parts.slice(2).join(' ');
 
-        const fd = new FormData(form); // включает файл
+        const fd = new FormData(form);
         const submitBtn = form.querySelector('button[type="submit"]');
-        submitBtn.disabled = true;
-        const oldText = submitBtn.textContent;
-        submitBtn.textContent = 'Yuborilmoqda...';
+        const oldText = submitBtn.textContent; submitBtn.disabled = true; submitBtn.textContent = 'Yuborilmoqda...';
 
-        try {
-          const resp = await fetch('/submit', { method: 'POST', body: fd });
+        try{
+          const resp = await fetch('/submit', { method:'POST', body:fd });
           const payload = await resp.json();
 
-          if (!resp.ok) {
-            if (payload?.errors) {
+          if(!resp.ok){
+            if (payload?.errors){
               Object.entries(payload.errors).forEach(([k,v]) => {
-                const el = (k === 'photo') ? photoInput : document.getElementById(k);
+                const el = (k==='photo') ? photoInput : document.getElementById(k);
                 if (el) setError(el, v);
               });
             } else {
@@ -439,15 +350,15 @@
 
           document.getElementById('success').style.display = 'block';
           form.reset(); updateCount();
+          if (previewUrl){ URL.revokeObjectURL(previewUrl); previewUrl = null; }
           preview.style.display='none'; preview.removeAttribute('src'); dzInner.style.display='flex';
-          document.querySelector('#apply').scrollIntoView({ behavior: 'smooth', block: 'start' });
+          document.querySelector('#apply').scrollIntoView({ behavior:'smooth', block:'start' });
 
-        } catch (err) {
+        } catch(err){
           alert('Tarmoq xatosi: server javob bermadi.');
           console.error(err);
         } finally {
-          submitBtn.disabled = false;
-          submitBtn.textContent = oldText;
+          submitBtn.disabled = false; submitBtn.textContent = oldText;
         }
       });
     })();

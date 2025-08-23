@@ -1,104 +1,85 @@
 import os
 import re
-import time
 import html
+import mimetypes
 import requests
-from threading import Thread
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify, render_template, Response
 
-# ====== Настройки / окружение ======
+# --- Env: отдельные переменные для бота формы ---
 load_dotenv()
-BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-ADMIN_CHAT_ID = os.getenv("TELEGRAM_ADMIN_CHAT_ID")  # @groupusername или -100...
+FORM_BOT_TOKEN = os.getenv("FORM_BOT_TOKEN")
+FORM_CHAT_ID   = os.getenv("FORM_CHAT_ID")   # @groupusername или -100...
 
-if not BOT_TOKEN:
-    raise RuntimeError("В .env нет TELEGRAM_BOT_TOKEN")
-if not ADMIN_CHAT_ID:
-    raise RuntimeError("В .env нет TELEGRAM_ADMIN_CHAT_ID")
+if not FORM_BOT_TOKEN or not FORM_CHAT_ID:
+    raise RuntimeError("Задайте FORM_BOT_TOKEN и FORM_CHAT_ID в .env / Render env")
 
-API = f"https://api.telegram.org/bot{BOT_TOKEN}"
+API = f"https://api.telegram.org/bot{FORM_BOT_TOKEN}"
 
-# ====== Flask ======
+# --- Flask ---
 app = Flask(__name__)
-app.config['TEMPLATES_AUTO_RELOAD'] = True
+app.config["TEMPLATES_AUTO_RELOAD"] = True
+# защита от слишком больших аплоадов (чуть больше лимита Телеграма на фото ~10MB)
+app.config["MAX_CONTENT_LENGTH"] = 12 * 1024 * 1024
 
 PHONE_RE = re.compile(r"^[0-9+()\s\-]{7,20}$", re.UNICODE)
+MAX_PHOTO_SIZE = 10 * 1024 * 1024  # лимит для sendPhoto
+ALLOWED_MIMES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+ALLOWED_EXTS  = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
 
-@app.get("/favicon.ico")
-def favicon():
-    return Response(status=204)
 
-# ====== Валидация формы ======
-def validate(data: dict) -> dict:
-    errors = {}
-
-    def need(k):
-        v = (data.get(k) or "").strip()
-        return v, (len(v) == 0)
-
-    first, empty = need("firstName")
-    if empty or len(first) < 2:
-        errors["firstName"] = "Имя обязательно и не короче 2 символов."
-    last, empty = need("lastName")
-    if empty or len(last) < 2:
-        errors["lastName"] = "Фамилия обязательна и не короче 2 символов."
-    middle = (data.get("middleName") or "").strip()
-    if middle and len(middle) < 2:
-        errors["middleName"] = "Отчество либо пусто, либо от 2 символов."
-    phone, empty = need("phone")
-    if empty or not PHONE_RE.match(phone):
-        errors["phone"] = "Укажите корректный телефон."
-    email, empty = need("email")
-    if empty or "@" not in email or "." not in email:
-        errors["email"] = "Укажите корректный e-mail."
-    about, empty = need("about")
-    if empty or len(about) < 20 or len(about) > 600:
-        errors["about"] = "Поле «О себе»: 20–600 символов."
-
-    return errors
-
-# ====== Хелперы Telegram ======
+# --- Helpers ---
 def _normalize_chat_id(val: str):
-    """Принимает '@groupname' либо числовой ID (-100...) и приводит к виду для sendMessage."""
+    """Вернёт '@group' или числовой int(-100...) как требует Telegram API."""
     val = str(val).strip()
     return val if val.startswith("@") else int(val)
 
-def tg_get(method: str, **params):
-    r = requests.get(f"{API}/{method}", params=params, timeout=60)
-    r.raise_for_status()
-    data = r.json()
-    if not data.get("ok"):
-        raise RuntimeError(f"Telegram API error: {data}")
-    return data["result"]
+def _file_allowed(file):
+    """
+    Проверяет файл (если есть): MIME/расширение и размер.
+    Возвращает (ok: bool, message: str)
+    """
+    if not file or not getattr(file, "filename", ""):
+        return True, ""
 
-def tg_post(method: str, payload: dict):
-    r = requests.post(f"{API}/{method}", json=payload, timeout=30)
-    r.raise_for_status()
-    data = r.json()
-    if not data.get("ok"):
-        raise RuntimeError(f"Telegram API error: {data}")
-    return data["result"]
+    # MIME/расширение
+    mime = (file.mimetype or "").lower()
+    if mime not in ALLOWED_MIMES:
+        ext = os.path.splitext(file.filename or "")[1].lower()
+        if ext not in ALLOWED_EXTS:
+            return False, "Ruxsat etilgan formatlar: JPG/PNG/WEBP/GIF."
+        # попытка угадать по расширению
+        guessed, _ = mimetypes.guess_type(file.filename)
+        if guessed:
+            mime = guessed.lower()
 
-def tg_send_message(chat_id, text, parse_mode=None):
-    body = {"chat_id": chat_id, "text": text, "disable_web_page_preview": True}
-    if parse_mode:
-        body["parse_mode"] = parse_mode
-    return tg_post("sendMessage", body)
+    # размер (не вычитывая содержимое)
+    size = None
+    if getattr(file, "content_length", None):
+        size = file.content_length
+    else:
+        try:
+            cur = file.stream.tell()
+            file.stream.seek(0, os.SEEK_END)
+            size = file.stream.tell()
+            file.stream.seek(cur, os.SEEK_SET)
+        except Exception:
+            size = None
 
-# Сообщение с анкеты -> в указанный чат (группа/ЛС/канал)
-def send_form_to_telegram(data: dict) -> None:
+    if size and size > MAX_PHOTO_SIZE:
+        return False, "Rasm hajmi 10 MB dan oshmasin."
+
+    return True, ""
+
+def build_caption(data: dict) -> str:
     esc = lambda s: html.escape((s or "").strip(), quote=True)
-
     lines = [
         "<b>Yangi ariza</b>",
         f"F.I.O.: <b>{esc(data.get('firstName'))}</b>",
         f"Telefon: {esc(data.get('phone'))}",
         f"Email: {esc(data.get('email'))}",
     ]
-
-    # необязательные поля — добавляем, только если заполнены
-    opt = [
+    for label, key in [
         ("Yoshi", "age"),
         ("Shahar / yashash joyi", "city"),
         ("Instagram", "instagram"),
@@ -107,110 +88,125 @@ def send_form_to_telegram(data: dict) -> None:
         ("YouTube", "youtube"),
         ("Obunachilar soni", "subs"),
         ("Kontent yo‘nalishi", "niche"),
-    ]
-    for label, key in opt:
+    ]:
         val = (data.get(key) or "").strip()
         if val:
             lines.append(f"{label}: {esc(val)}")
 
     lines.append("Nega biz bilan ishlashni xohlaysiz?")
     lines.append(esc(data.get("about")))
+    return "\n".join(lines)
 
-    text = "\n".join(lines)
+def _tg_request(method: str, *, data=None, json=None, files=None, timeout=30):
+    """POST к Telegram + явная проверка ok:false для понятных ошибок."""
+    r = requests.post(f"{API}/{method}", data=data, json=json, files=files, timeout=timeout)
+    try:
+        payload = r.json()
+    except Exception:
+        r.raise_for_status()
+        return
+    if not payload.get("ok", False):
+        desc = payload.get("description") or "unknown"
+        raise RuntimeError(f"Telegram API error: {desc} | method={method} | payload={payload}")
+    return payload.get("result")
 
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-    r = requests.post(url, json={
-        "chat_id": _normalize_chat_id(ADMIN_CHAT_ID),
-        "text": text,
-        "parse_mode": "HTML",
-        "disable_web_page_preview": True,
-    }, timeout=10)
-    r.raise_for_status()
+def validate(data: dict, file=None) -> dict:
+    """Проверка обязательных полей + (необяз.) фото."""
+    errors = {}
 
-# ====== Обработчики Flask ======
+    def need(k):
+        v = (data.get(k) or "").strip()
+        return v, (len(v) == 0)
+
+    first, empty = need("firstName")
+    if empty or len(first) < 2:
+        errors["firstName"] = "Iltimos, to‘liq ismingizni yozing (kamida 2 belgi)."
+
+    phone, empty = need("phone")
+    if empty or not PHONE_RE.match(phone):
+        errors["phone"] = "Telefon raqamini to‘g‘ri kiriting."
+
+    email, empty = need("email")
+    if empty or "@" not in email or "." not in email:
+        errors["email"] = "To‘g‘ri email manzilini kiriting."
+
+    about, empty = need("about")
+    if empty or len(about) < 20 or len(about) > 600:
+        errors["about"] = "1–2 jumla (20–600 belgi)."
+
+    ok, msg = _file_allowed(file)
+    if not ok:
+        errors["photo"] = msg
+
+    return errors
+
+def send_to_telegram(data: dict, photo_file=None) -> None:
+    """Если есть файл — sendPhoto, иначе sendMessage."""
+    chat_id = _normalize_chat_id(FORM_CHAT_ID)
+    caption = build_caption(data)
+
+    if photo_file and getattr(photo_file, "filename", ""):
+        try:
+            photo_file.stream.seek(0)
+        except Exception:
+            pass
+
+        _tg_request(
+            "sendPhoto",
+            data={"chat_id": chat_id, "caption": caption, "parse_mode": "HTML"},
+            files={
+                "photo": (
+                    photo_file.filename,
+                    photo_file.stream,
+                    photo_file.mimetype or "application/octet-stream"
+                )
+            },
+            timeout=30,
+        )
+    else:
+        _tg_request(
+            "sendMessage",
+            json={"chat_id": chat_id, "text": caption, "parse_mode": "HTML", "disable_web_page_preview": True},
+            timeout=15,
+        )
+
+
+# --- Routes ---
+@app.get("/favicon.ico")
+def favicon():
+    return Response(status=204)
+
+@app.get("/healthz")
+def healthz():
+    return "ok", 200
+
 @app.get("/")
 def index():
     return render_template("index.html")
 
 @app.post("/submit")
 def submit():
-    data = request.get_json(silent=True) or request.form.to_dict() or {}
-    errors = validate(data)
+    # фронт шлёт multipart/form-data (FormData), тогда файл в request.files['photo']
+    if request.form or request.files:
+        data = request.form.to_dict()
+        photo = request.files.get("photo")
+    else:
+        data = request.get_json(silent=True) or {}
+        photo = None
+
+    errors = validate(data, photo)
     if errors:
         return jsonify({"ok": False, "errors": errors}), 400
+
     try:
-        send_form_to_telegram(data)
-    except requests.RequestException as e:
+        send_to_telegram(data, photo)
+    except Exception as e:
+        app.logger.exception("Telegram send failed")
         return jsonify({"ok": False, "error": f"Ошибка Telegram: {e}"}), 502
+
     return jsonify({"ok": True})
 
-# ====== Встроенный /chatid (long polling) ======
-def poll_updates():
-    """Фоновый поток: слушает обновления и отвечает на /chatid."""
-    try:
-        me = tg_get("getMe")
-        bot_username = me.get("username", "")
-        print(f"TG poller запущен. Бот @{bot_username}. Напишите в группе /chatid")
-    except Exception as e:
-        print("Не удалось вызвать getMe:", e)
-        bot_username = ""
 
-    offset = None
-    while True:
-        try:
-            updates = tg_get(
-                "getUpdates",
-                timeout=50,
-                offset=offset,
-                allowed_updates=["message", "channel_post"]
-            )
-            for upd in updates:
-                offset = upd["update_id"] + 1
-                msg = upd.get("message") or upd.get("channel_post")
-                if not msg:
-                    continue
-
-                chat = msg["chat"]
-                text = (msg.get("text") or "").strip()
-
-                is_cmd = (
-                    text.startswith("/chatid") or
-                    (bot_username and text.startswith(f"/chatid@{bot_username}")) or
-                    text.startswith("/id")
-                )
-                if not is_cmd:
-                    continue
-
-                parts = [
-                    f"chat.id = {chat['id']}",
-                    f"chat.type = {chat.get('type')}"
-                ]
-                if chat.get("title"):
-                    parts.append(f"chat.title = {chat['title']}")
-                if chat.get("username"):
-                    parts.append(f"chat.username = @{chat['username']}")
-
-                user = msg.get("from", {})
-                sender = f"{user.get('first_name','')} {user.get('last_name','')}".strip()
-                parts.append(f"from.id = {user.get('id')} ({sender or '—'} @{user.get('username','')})")
-
-                env_hint = f"@{chat['username']}" if chat.get("username") else str(chat["id"])
-                parts.append("\nВ .env можно записать:\nTELEGRAM_ADMIN_CHAT_ID=" + env_hint)
-
-                reply = "\n".join(parts)
-                try:
-                    tg_send_message(chat["id"], reply)
-                except Exception as e:
-                    print("Ошибка отправки ответа в чат:", e)
-        except Exception as e:
-            # Ошибки сети/таймауты — просто подождём и продолжим
-            print("TG poller error:", e)
-            time.sleep(2)
-
-# ====== Точка входа ======
 if __name__ == "__main__":
-    # Запускаем Telegram-поллер в фоне (для /chatid)
-    #Thread(target=poll_updates, daemon=True).start()
-
-    # Запускаем веб-сервер
-    app.run(host="0.0.0.0", port=5000, debug=False, use_reloader=False)
+    # Локальный запуск: python app.py
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)), debug=False)
