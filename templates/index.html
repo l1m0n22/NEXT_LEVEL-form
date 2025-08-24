@@ -81,7 +81,7 @@
   <header class="header">
     <div class="container inner">
       <div class="logo">Анкета</div>
-      <button class="btn" id="cta">Topshirish</button>
+      <!-- верхняя правая кнопка удалена -->
     </div>
   </header>
 
@@ -95,11 +95,14 @@
             Agar siz bloger bo‘lsangiz yoki endi boshlayotgan bo‘lsangiz — biz sizni qidiryapmiz!</p>
           <p>Siz kontent yaratasiz, biz esa mahsulot, qo‘llab-quvvatlash va barqaror daromad beramiz.</p>
           <ul class="help" style="margin:0; padding-left:1rem;">
-            <li>Ushbu anketani to‘ldiring va biz siz bilan tez orada bog‘ланamiz.</li>
+            <li>Ushbu anketani to‘ldiring va biz siz bilan tez orada bog‘lanamiz.</li>
             <li>Vaqt: to‘ldirish uchun atigi 1–2 daqiqa.</li>
             <li><strong>Eslatma:</strong> * yulduzcha bilan belgilangan maydonlar — majburий.</li>
           </ul>
-          <div style="margin-top:16px"><button class="btn" id="cta2">Anketaga o‘tish</button></div>
+          <!-- обычная кнопка снизу, не плавающая -->
+          <div style="margin-top:16px">
+            <button class="btn" id="cta">Anketaga o‘tish</button>
+          </div>
         </div>
       </div>
     </section>
@@ -111,18 +114,17 @@
 
           <input type="hidden" id="lastName"  name="lastName" />
           <input type="hidden" id="middleName" name="middleName" />
-          <!-- ⬇️ ДОБАВЛЕНО: chat_id из бота для конверсии -->
           <input type="hidden" id="funnel_c" name="c" />
 
           <div class="grid">
             <div class="field">
-              <label for="firstName">Ф.И.О. (to‘liq ismingizni yozing) <small class="req">*</small></label>
+              <label for="firstName">Ф.И.О. <small class="req">*</small></label>
               <input id="firstName" name="firstName" type="text" placeholder="Familiya Ism Sharif" required minlength="2" maxlength="120" />
               <div class="error" id="err-firstName"></div>
             </div>
 
             <div class="field">
-              <label for="phone">Telefon raqamingiz (+998 ... formatida) <small class="req">*</small></label>
+              <label for="phone">Telefon raqamingiz <small class="req">*</small></label>
               <input id="phone" name="phone" type="tel" inputmode="tel"
                      placeholder="+998 90 123 45 67" autocomplete="tel" required
                      pattern="^[0-9+()\s-]{7,20}$"
@@ -131,19 +133,19 @@
             </div>
 
             <div class="field">
-              <label for="email">Email manzilingiz (rasmiy yoki faol ishlatadigan pochta) <small class="req">*</small></label>
+              <label for="email">Email manzilingiz <small class="req">*</small></label>
               <input id="email" name="email" type="email" placeholder="name@example.com" autocomplete="email" required />
               <div class="error" id="err-email"></div>
             </div>
 
             <div class="field">
-              <label for="age">Yoshingiz (masalan: 23 yosh)</label>
+              <label for="age">Yoshingiz</label>
               <input id="age" name="age" type="number" min="10" max="120" placeholder="23" />
               <div class="error" id="err-age"></div>
             </div>
 
             <div class="field">
-              <label for="city">Shahar / yashash joyingiz (Toshkent, Samarqand va h.k.)</label>
+              <label for="city">Shahar / yashash joyingiz</label>
               <input id="city" name="city" type="text" placeholder="Toshkent" maxlength="80" />
               <div class="error" id="err-city"></div>
             </div>
@@ -179,26 +181,26 @@
             </div>
 
             <div class="field" style="grid-column:1 / -1;">
-              <label for="niche">Kontent yo‘nalishingiz (masalan: oilaviy blog, moda, lifestyle, taom, humor va h.k.)</label>
+              <label for="niche">Kontent yo‘nalishingiz</label>
               <input id="niche" name="niche" type="text" placeholder="Masalan: lifestyle, moda..." maxlength="200" />
               <div class="error" id="err-niche"></div>
             </div>
 
             <div class="field" style="grid-column:1 / -1;">
-              <label for="about">Nega biz bilan ishlashni xohlaysiz? (1–2 jumla yozing) <small class="req">*</small></label>
+              <label for="about">Nega biz bilan ishlashni xohlaysiz? <small class="req">*</small></label>
               <textarea id="about" name="about" rows="5" placeholder="Qisqa va aniq 1–2 jumla yozing" required minlength="20" maxlength="600"></textarea>
               <div class="help"><span id="count">0</span>/600</div>
               <div class="error" id="err-about"></div>
             </div>
 
-            <!-- Dropzone для фото -->
+            <!-- Dropzone -->
             <div class="field" style="grid-column:1 / -1;">
               <input id="photo" name="photo" type="file" class="file-input" accept="image/jpeg,image/png,image/webp,image/gif" />
               <label id="dropzone" for="photo" class="dropzone" role="button" tabindex="0" aria-label="Foto yuklash">
                 <div class="dz-inner">
                   <div class="dz-plus">+</div>
                   <div class="dz-text">
-                    <strong>Foto (bu yerga suratni tashlang)</strong>
+                    <strong>Foto</strong>
                     <small>JPG/PNG/WEBP/GIF, 10 MB gacha</small>
                     <small>yoki bosing — fayl tanlang</small>
                   </div>
@@ -218,18 +220,16 @@
     </section>
   </main>
 
-  <button class="btn mobile-cta" id="ctaMobile">Topshirish</button>
+  <!-- плавающая нижняя кнопка удалена -->
 
   <script>
     (function(){
       const cta  = document.getElementById('cta');
-      const cta2 = document.getElementById('cta2');
-      const ctaMobile = document.getElementById('ctaMobile');
       const apply = document.getElementById('apply');
       const form = document.getElementById('form');
       const formCard = form.closest('.card');
 
-      // ⬇️ ДОБАВЛЕНО: сохранить ?c=... и проставить в скрытое поле
+      // сохранить ?c=... и проставить в скрытое поле
       (function persistChatId(){
         const cParam = new URLSearchParams(location.search).get('c');
         if (cParam) localStorage.setItem('funnel_c', cParam);
@@ -244,7 +244,7 @@
         setTimeout(()=>formCard.classList.remove('highlight'),1600);
         setTimeout(()=>document.getElementById('firstName').focus({ preventScroll:true }),600);
       }
-      [cta, cta2, ctaMobile].forEach(btn => btn && btn.addEventListener('click', goToForm));
+      cta && cta.addEventListener('click', goToForm);
 
       // Counter
       const about = document.getElementById('about');
