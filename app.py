@@ -43,11 +43,20 @@ ALLOWED_MIMES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 ALLOWED_EXTS  = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
 
 
+# --- Exceptions ---
+class ChatMigrated(Exception):
+    """Поднявается когда Telegram сообщает migrate_to_chat_id (group -> supergroup)."""
+    def __init__(self, new_chat_id: int, payload: dict | None = None):
+        super().__init__(f"Chat migrated to {new_chat_id}")
+        self.new_chat_id = int(new_chat_id)
+        self.payload = payload or {}
+
+
 # --- Helpers ---
-def _normalize_chat_id(val: str):
+def _normalize_chat_id(val: str | int):
     """Вернёт '@group' или числовой int(-100...) как требует Telegram API."""
-    val = str(val).strip()
-    return val if val.startswith("@") else int(val)
+    s = str(val).strip()
+    return s if s.startswith("@") else int(s)
 
 def _file_allowed(file):
     """
@@ -66,7 +75,7 @@ def _file_allowed(file):
         # попытка угадать по расширению
         guessed, _ = mimetypes.guess_type(file.filename)
         if guessed:
-            mime = guessed.lower()
+            mime = (guessed or "").lower()
 
     # размер (не вычитывая содержимое)
     size = None
@@ -113,8 +122,12 @@ def build_caption(data: dict) -> str:
     return "\n".join(lines)
 
 def _tg_request(method: str, *, data=None, json=None, files=None, timeout=30):
-    """POST к Telegram + явная проверка ok:false для понятных ошибок."""
+    """
+    POST к Telegram + явная проверка ok:false для понятных ошибок.
+    Специально ловим migrate_to_chat_id и бросаем ChatMigrated с new_chat_id.
+    """
     r = requests.post(f"{API}/{method}", data=data, json=json, files=files, timeout=timeout)
+    # если не JSON — кинем HTTP ошибку
     try:
         payload = r.json()
     except Exception:
@@ -122,6 +135,11 @@ def _tg_request(method: str, *, data=None, json=None, files=None, timeout=30):
         return
     if not payload.get("ok", False):
         desc = payload.get("description") or "unknown"
+        params = payload.get("parameters") or {}
+        migrate_to = params.get("migrate_to_chat_id")
+        if migrate_to:
+            # Телеграм сообщает новый chat_id (supergroup)
+            raise ChatMigrated(migrate_to, payload)
         raise RuntimeError(f"Telegram API error: {desc} | method={method} | payload={payload}")
     return payload.get("result")
 
@@ -156,34 +174,50 @@ def validate(data: dict, file=None) -> dict:
     return errors
 
 def send_to_telegram(data: dict, photo_file=None) -> None:
-    """Если есть файл — sendPhoto, иначе sendMessage."""
+    """
+    Если есть файл — sendPhoto, иначе sendMessage.
+    При ошибке 'group chat was upgraded to a supergroup chat' делаем ретрай на новый chat_id.
+    """
+    global FORM_CHAT_ID  # чтобы обновить на лету и дальше использовать новый id
     chat_id = _normalize_chat_id(FORM_CHAT_ID)
     caption = build_caption(data)
 
-    if photo_file and getattr(photo_file, "filename", ""):
-        try:
-            photo_file.stream.seek(0)
-        except Exception:
-            pass
+    def _send_photo(_chat_id):
+        # Гарантируем начало стрима
+        if photo_file and getattr(photo_file, "filename", ""):
+            try:
+                photo_file.stream.seek(0)
+            except Exception:
+                pass
+            return _tg_request(
+                "sendPhoto",
+                data={"chat_id": _chat_id, "caption": caption, "parse_mode": "HTML"},
+                files={
+                    "photo": (
+                        photo_file.filename,
+                        photo_file.stream,
+                        photo_file.mimetype or "application/octet-stream"
+                    )
+                },
+                timeout=30,
+            )
+        else:
+            return _tg_request(
+                "sendMessage",
+                json={"chat_id": _chat_id, "text": caption, "parse_mode": "HTML", "disable_web_page_preview": True},
+                timeout=15,
+            )
 
-        _tg_request(
-            "sendPhoto",
-            data={"chat_id": chat_id, "caption": caption, "parse_mode": "HTML"},
-            files={
-                "photo": (
-                    photo_file.filename,
-                    photo_file.stream,
-                    photo_file.mimetype or "application/octet-stream"
-                )
-            },
-            timeout=30,
-        )
-    else:
-        _tg_request(
-            "sendMessage",
-            json={"chat_id": chat_id, "text": caption, "parse_mode": "HTML", "disable_web_page_preview": True},
-            timeout=15,
-        )
+    try:
+        _send_photo(chat_id)
+    except ChatMigrated as cm:
+        # Ретрай на новый chat_id (формат int -100...)
+        new_id = cm.new_chat_id
+        app.logger.info(f"[telegram] Chat migrated -> retry with {new_id}")
+        _send_photo(new_id)
+        # Обновляем глобалку, чтобы следующие отправки уже шли в супергруппу
+        FORM_CHAT_ID = str(new_id)
+    # Остальные исключения пусть пробросятся наружу (обработаются в submit)
 
 def notify_funnel_if_any(chat_id_str: str, form_data: dict):
     """Шлём уведомление боту-воронке о том, что заявка подана (если сконфигурирован вебхук и есть c)."""
@@ -201,7 +235,7 @@ def notify_funnel_if_any(chat_id_str: str, form_data: dict):
     headers = {"Content-Type": "application/json"}
     if FUNNEL_SIGNING_SECRET:
         sig = hmac.new(FUNNEL_SIGNING_SECRET.encode("utf-8"), body, hashlib.sha256).hexdigest()
-        headers["X-Signature-256"] = f"sha256={sig}"
+        headers["X-Signature-256"] = f"sha256={sig}"]
     try:
         r = requests.post(FUNNEL_SUBMIT_URL, data=body, headers=headers, timeout=5)
         r.raise_for_status()
